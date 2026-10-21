@@ -1,0 +1,23 @@
+# Rahasia
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+
+# Node
+node_modules/
+
+# Data dan dump
+data-dummy/output/
+*.sql.gz
+*.dump
+*.parquet
+
+# Sistem dan Office
+.DS_Store
+Thumbs.db
+~$*
