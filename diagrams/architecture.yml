@@ -1,0 +1,45 @@
+title: HST audit data platform
+source: README.md
+canvas: [2250, 1020]
+icon_size: 56
+cell: [190, 170]
+origin: [180, 450]
+nodes:
+  users: {icon: res:users, label: [Department users, Stasiun / Finance / IT], at: [0, 0]}
+  sap: {icon: res:servers, label: [SAP, ERP / HCM / CRM], at: [0, 1.1]}
+  archive: {icon: res:servers, label: [Archive server, raw + curated, DR], at: [0, 2.2]}
+  vpn: {icon: site-to-site-vpn, label: [Site-to-Site VPN], at: [1.8, 0]}
+  alb: {icon: elastic-load-balancing, label: [Application, Load Balancer], at: [2.8, 0]}
+  portal: {icon: fargate, label: [Web portal, ECS Fargate], at: [3.8, 0]}
+  appflow: {icon: appflow, label: [AppFlow], at: [1.8, 1.1]}
+  macie: {icon: macie, label: [Macie, PII scan], at: [4.8, -0.9], label_pos: right, support: true}
+  landing: {icon: s3, label: [S3 landing, per department], at: [4.8, 0]}
+  raw: {icon: s3, label: [S3 raw, Object Lock], at: [5.8, 0], label_pos: above}
+  glue: {icon: glue, label: [Glue, ETL + checks], at: [6.8, 0]}
+  curated: {icon: s3, label: [S3 curated], at: [7.8, 0]}
+  athena: {icon: athena, label: [Athena], at: [8.8, -0.9], label_pos: above}
+  redshift: {icon: redshift, label: [Redshift], at: [8.8, 0], label_pos: above}
+  quick: {icon: quick, label: [QuickSight, audit dashboards], at: [9.8, 0]}
+  datasync: {icon: datasync, label: [DataSync], at: [5.8, 2.2]}
+edges:
+  - [users, vpn]
+  - [vpn, alb]
+  - [alb, portal]
+  - {from: portal, to: landing, start_off: [0, -14], end_off: [0, -14]}
+  - [sap, appflow]
+  - {from: appflow, to: landing, via: [[4.3, 1.1], [4.3, 0.0824]], end_off: [0, 14]}
+  - [landing, raw]
+  - [raw, glue]
+  - [glue, curated]
+  - [curated, redshift]
+  - {from: curated, to: athena, via: [[7.8, -0.9]]}
+  - [redshift, quick]
+  - {from: athena, to: quick, via: [[9.8, -0.9]]}
+  - [raw, datasync]
+  - {from: redshift, to: datasync, via: [[8.8, 2.2]]}
+  - [datasync, archive]
+  - {from: macie, to: landing, kind: support, color: '#DD344C'}
+groups:
+  corporate: {title: Kantor pusat (on-prem), style: corporate, members: [users, sap, archive]}
+  cloud: {title: AWS Cloud, style: cloud, members: [region]}
+  region: {title: 'Region ap-southeast-3 (Jakarta), Multi-AZ', style: region, members: [vpn, alb, portal, appflow, macie, landing, raw, glue, curated, athena, redshift, quick, datasync]}
