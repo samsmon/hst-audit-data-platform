@@ -18,9 +18,9 @@ Ketiga sumber tidak punya kunci bersama. Auditor harus mencocokkan order, group 
 
 ## Rancangan
 
-Server on-premise kantor pusat tetap dipakai, sedangkan pemrosesan dan analitik berjalan di AWS region Jakarta.
+Semua komponen aktif, termasuk portal unggah, berjalan di AWS region Jakarta. Server on-premise kantor pusat hanya menerima salinan data sebagai arsip dan cadangan.
 
-1. Stasiun dan finance mengunggah data lewat portal web self-hosted dengan template baku. Export sistem ticketing dan data ERP, HCM, serta CRM ikut dikirim ke AWS.
+1. Stasiun, finance, dan IT wajib mengunggah data per periode hanya lewat portal audit terpusat dengan template baku. Portal berjalan di ECS Fargate di belakang Application Load Balancer multi-AZ, dan file diunggah langsung ke bucket landing departemen lewat presigned URL. Data ERP, HCM, dan CRM masuk lewat integrasi sistem ke sistem.
 2. Data masuk ke bucket S3 landing per departemen, dipindai Amazon Macie untuk data pribadi, lalu dipindah ke zona raw yang dikunci S3 Object Lock.
 3. Dokumen scan dipilah dengan Amazon Comprehend, diekstrak dengan Amazon Textract, dan hasil yang meragukan diperiksa manusia lewat Amazon A2I.
 4. AWS Glue membersihkan, menyamakan skema, mencocokkan antar sumber, dan menandai anomali ke bucket curated.
@@ -33,11 +33,21 @@ AWS menjadi sumber kebenaran tunggal. Layanan berjalan Multi-AZ di region Jakart
 
 | Folder | Isi |
 |---|---|
-| `docs/` | Dokumen desain: arsitektur, star schema, tata kelola data |
+| `docs/` | Dokumen desain: arsitektur, tata kelola data, model data, source-to-target, aturan audit |
 | `diagrams/` | Spesifikasi diagram arsitektur |
-| `sql/` | DDL data warehouse, kueri analitik, aturan deteksi anomali |
-| `etl/` | Skrip ETL |
-| `data-dummy/` | Generator data dummy |
+| `sql/` | DDL staging dan star schema, data referensi, aturan deteksi anomali, kepatuhan unggah |
+| `etl/` | Pipeline lokal (pandas + DuckDB) untuk menguji aturan tanpa layanan cloud |
+| `data-dummy/` | Generator data dummy dengan anomali terkontrol |
+
+## Mencoba secara lokal
+
+```bash
+pip install -r data-dummy/requirements.txt -r etl/requirements.txt
+python data-dummy/generate.py
+python etl/run_pipeline.py
+```
+
+Generator membuat data tiga bulan untuk tiga stasiun beserta 58 anomali terkontrol dan 15 kasus pengecoh yang sah. Pipeline memuat semuanya ke DuckDB, menjalankan aturan di `sql/`, lalu membandingkan hasil deteksi dengan kunci anomali dan memastikan pengecoh tidak ikut ditandai.
 
 ## Catatan data
 
